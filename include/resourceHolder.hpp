@@ -36,10 +36,12 @@ SOFTWARE.
 #include <string>
 #include <memory>
 
+#include <SFML/System/NonCopyable.hpp>
+
 #include "game_error.hpp"
 
 template <typename Resource, typename Identifier>
-class ResourceHolder
+class ResourceHolder : sf::NonCopyable
 {
     public:
         void load(Identifier t_id, const std::string& t_filename);
@@ -47,10 +49,17 @@ class ResourceHolder
         void load(Identifier t_id, const std::string& t_filename, const Parameter& t_secondParam);
         Resource& get(Identifier t_id);
         const Resource& get(Identifier t_id) const;
+
+        static ResourceHolder<Resource, Identifier>& instance()
+        {
+            static ResourceHolder<Resource, Identifier> instance;
+            return instance;
+        }
+
     private:
         void insertResource(Identifier t_id, std::unique_ptr<Resource> t_resource);
     private:
-        std::map<Identifier, std::unique_ptr<Resource>> m_resourceMap;
+        std::map<Identifier, std::unique_ptr<Resource>> m_resourceMap {};
 };
 
 #include "resourceHolder.tpp"

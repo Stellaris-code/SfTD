@@ -31,6 +31,7 @@ SOFTWARE.
 #define MAP_HPP
 
 #include <vector>
+#include <queue>
 #include <string>
 #include <algorithm>
 #include <stdexcept>
@@ -65,22 +66,23 @@ SOFTWARE.
 class Map : public sf::Drawable
 {
     public:
-        Map() = delete;
-        explicit Map(const std::string& t_basepath);
+        Map(unsigned int t_life = 50, const std::string& t_basepath = ".");
 
         void addTower(const Tower& tower) { m_towers.push_back(tower); }
-
-        void setTextureHolder(const TextureHolder& t_textures);
 
         void load(const std::string& t_filename);
 
         sf::Vector2u mapSize() const { return m_loader.GetMapSize(); }
 
-        void addWave(const Wave& wave) { m_waves.push_back(wave); }
+        void addWave(const Wave& wave)
+        {
+            m_inactiveWaves.push(wave);
+            m_currentWaveDesc = m_inactiveWaves.front().description;
+        }
 
-        unsigned int launchWave();
+        size_t launchWave();
 
-        unsigned int remainingWaves() const { return m_waves.size(); }
+        size_t remainingWaves() const { return m_inactiveWaves.size(); }
 
         sf::Vector2f startPoint() const { return m_startPoint; }
 
@@ -129,6 +131,12 @@ class Map : public sf::Drawable
 
         sf::Vector2u tileSize() const { return m_loader.tileSize(); }
 
+        unsigned int remainingLives() const { return m_lives; }
+        unsigned int maxLives() const { return m_maxLives; }
+
+        const std::string& waveDescription()
+        { return m_currentWaveDesc; }
+
     protected:
         virtual void draw(sf::RenderTarget& t_target, sf::RenderStates t_states) const;
 
@@ -141,10 +149,10 @@ class Map : public sf::Drawable
         bool isTileVisible(const tmx::MapTile& t_tile) const;
 
     private:
-        size_t m_actualWave {};
         tmx::MapLoader m_loader;
         std::vector<Tower> m_towers;
-        std::vector<Wave> m_waves;
+        std::queue<Wave> m_inactiveWaves;
+        std::vector<Wave> m_activeWaves;
         sf::Vector2f m_startPoint;
         sf::Vector2f m_finishPoint;
         std::string m_mapName;
@@ -154,8 +162,11 @@ class Map : public sf::Drawable
         std::vector<sf::Vector2f> m_path;
         std::map<std::string, sf::Shader> m_shaderTable;
         sf::Sprite m_selectedTile;
+        unsigned int m_lives { 50 };
+        const unsigned int m_maxLives { 50 };
         thor::Animator<sf::Shape, std::string> m_shapeAnimator;
         thor::Animator<sf::Sprite, std::string> m_spriteAnimator;
+        std::string m_currentWaveDesc;
 };
 
 #endif // MAP_HPP

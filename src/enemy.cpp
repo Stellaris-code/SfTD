@@ -29,14 +29,6 @@ SOFTWARE.
 
 #include "enemy.hpp"
 
-Enemy::Enemy(const std::string& t_inName, const TextureHolder& t_textures,
-             const sf::Vector2f& t_position, const sf::Vector2f& t_scale,
-             const unsigned int t_life, const Type t_type, const DmgType t_resist)
-    : Enemy(t_inName, t_position, t_scale, t_life, t_type, t_resist)
-{
-    setTextureHolder(t_textures);
-}
-
 Enemy::Enemy(const std::string& t_inName, const sf::Vector2f& t_position,
              const sf::Vector2f& t_scale, const unsigned int t_life,
              const Type t_type, const DmgType t_resist)
@@ -49,15 +41,25 @@ Enemy::Enemy(const std::string& t_inName, const sf::Vector2f& t_position,
     init();
 }
 
+void Enemy::setMoveAnimation(const thor::FrameAnimation &t_animation, sf::Time t_duration)
+{
+    m_spriteAnimator.addAnimation(Animations::Move, t_animation, t_duration);
+    m_moveAnimAvailable = true;
+}
+
+void Enemy::setDieAnimation(const thor::FrameAnimation &t_animation, sf::Time t_duration)
+{
+    m_spriteAnimator.addAnimation(Animations::Die, t_animation, t_duration);
+    m_dieAnimAvailable = true;
+}
 
 void Enemy::init()
 {
     m_lifeBar.setFillColor(sf::Color::Red);
-    m_lifeBar.setPosition(m_sprite.getPosition().x, m_sprite.getPosition().y - 10);
+    m_lifeBar.setPosition(pos().x, pos().y - 20);
     m_lifeBar.setSize(sf::Vector2f(30, 4));
-
-    m_explosion.setPosition(m_sprite.getPosition());
-    m_explosion.setScale(m_sprite.getScale() / 2.f);
+    m_lifeBar.setOrigin(m_lifeBar.getLocalBounds().left + m_lifeBar.getSize().x / 2,
+                        m_lifeBar.getLocalBounds().top + m_lifeBar.getSize().y / 2);
 
     if (m_resistances == DmgType::Ice)
     {
@@ -75,60 +77,11 @@ void Enemy::init()
     {
         m_sprite.setColor(sf::Color(186, 255, 163)); // Light green
     }
-
-    initAnimations();
 }
 
-void Enemy::initAnimations()
+void Enemy::setTexture(const sf::Texture &t_texture, bool t_changeColorForResistances)
 {
-    auto addFramesY = [](thor::FrameAnimation& animation, int x, int yFirst,
-                        int yLast, int xMultiple, int yMultiple, float duration)
-    {
-        const int step = (yFirst < yLast) ? +1 : -1;
-        yLast += step; // so yLast is excluded in the range
-
-        for (int y {yFirst}; y != yLast; y += step)
-        {
-            animation.addFrame(duration, sf::IntRect(xMultiple*x, yMultiple*y,
-                                                     xMultiple, yMultiple));
-        }
-    };
-    auto addFramesX = [](thor::FrameAnimation& animation, int y, int xFirst,
-                        int xLast, int xMultiple, int yMultiple, float duration)
-    {
-        const int step = (xFirst < xLast) ? +1 : -1;
-        xLast += step; // so yLast is excluded in the range
-
-        for (int x {xFirst}; x != xLast; x += step)
-        {
-            animation.addFrame(duration, sf::IntRect(xMultiple*x, yMultiple*y,
-                                                     xMultiple, yMultiple));
-        }
-    };
-    thor::FrameAnimation walk;
-
-    walk.addFrame(1.f, sf::IntRect(28*1, 0, 28, 27));
-    addFramesX(walk, 0, 0, 2, 28, 27, 1.f);
-
-    thor::FrameAnimation explode;
-    for (int i {}; i < 5; ++i)
-    {
-        addFramesX(explode, i, 0, 4, 59, 48, 1.f);
-    }
-
-    m_spriteAnimator.addAnimation("walk", walk, sf::seconds(1.f));
-    m_explosionAnimator.addAnimation("explode", explode, sf::seconds(0.5f));
-}
-
-void Enemy::setTextureHolder(const TextureHolder &t_textures)
-{
-    m_sprite.setTexture(t_textures.get(Textures::Beetle));
-    m_explosion.setTexture(t_textures.get(Textures::Explosion));
-}
-
-void Enemy::setFontHolder(const FontHolder &t_fonts)
-{
-    SFTD_UNUSED(t_fonts);
+    m_sprite.setTexture(t_texture, t_changeColorForResistances);
 }
 
 void Enemy::takeDamage(unsigned int t_damageAmount, DmgType t_dmgtype)
@@ -170,14 +123,17 @@ void Enemy::takeDamage(unsigned int t_damageAmount, DmgType t_dmgtype)
     if (resultingAmount >= m_curLife)
     {
         m_curLife = 0;
-        m_visible = false;
+        m_alive = false;
+        if (m_dieAnimAvailable)
+        {
+            m_spriteAnimator.playAnimation(Animations::Die);
+        }
     }
     else
     {
         m_curLife -= resultingAmount;
     }
     m_lifeBar.setSize(sf::Vector2f(map(m_curLife, 0u, m_maxLife, 0u, 30u), 5.f));
-    m_explosionAnimator.playAnimation("explode");
 }
 
 void Enemy::heal(unsigned int t_lifeAmount)
@@ -206,16 +162,23 @@ void Enemy::setVelocity(sf::Vector2f t_inVelocity)
 void Enemy::update(const sf::Time& t_elapsedTime)
 {
     m_sprite.move(m_movement);
-    if (!m_spriteAnimator.isPlayingAnimation())
+    if ((m_moveAnimAvailable && !m_spriteAnimator.isPlayingAnimation())
+    || (m_spriteAnimator.isPlayingAnimation()
+        && m_spriteAnimator.getPlayingAnimation() != Animations::Move))
     {
-        m_spriteAnimator.playAnimation("walk");
+        m_spriteAnimator.playAnimation(Animations::Move, true);
+    }
+    if (!m_spriteAnimator.isPlayingAnimation() && !m_alive)
+    {
+        hide();
     }
     m_spriteAnimator.update(t_elapsedTime);
-    m_explosionAnimator.update(t_elapsedTime);
     m_spriteAnimator.animate(m_sprite);
-    m_explosionAnimator.animate(m_explosion);
-    m_lifeBar.setPosition(m_sprite.getPosition().x, m_sprite.getPosition().y - 10);
-    m_explosion.setPosition(m_sprite.getPosition());
+
+    setOrigin(localBounds().left + localBounds().width / 2,
+              localBounds().top + localBounds().height / 2);
+
+    m_lifeBar.setPosition(pos().x, pos().y - localBounds().height / 2 - 5);
 }
 
 void Enemy::draw(sf::RenderTarget &t_target, sf::RenderStates t_states) const
@@ -223,10 +186,6 @@ void Enemy::draw(sf::RenderTarget &t_target, sf::RenderStates t_states) const
     if (visible())
     {
         Entity::draw(t_target, t_states);
-        if (m_explosionAnimator.isPlayingAnimation())
-        {
-            t_target.draw(m_explosion, t_states);
-        }
         if (m_showLife)
         {
             t_target.draw(m_lifeBar, t_states);

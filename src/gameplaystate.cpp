@@ -1,6 +1,7 @@
-/** @file main.cpp
+/** @file gameplaystate.cpp
+GameplayState
 @author jim
-@date 19/09/2014
+@date 29/10/2014
 
 The MIT License (MIT)
 
@@ -26,16 +27,46 @@ SOFTWARE.
 
 */
 
-#include "game.hpp"
+#include "gameplaystate.hpp"
 
-int main()
+GameplayState::GameplayState(Game& t_engine)
+    : State(t_engine), m_map()
 {
-    TextureHolder::instance().load("explosion", "assets/explosion.png");
-    TextureHolder::instance().load("selectedTile", "assets/selected.png");
+}
 
-    FontHolder::instance().load(Fonts::Main, "fonts/Ubuntu-M.ttf");
+void GameplayState::init(const TextureHolder &t_th, const FontHolder &t_fh)
+{
+    m_map.loadShaderFromFile("water", "shaders/water.frag", sf::Shader::Fragment);
 
-    Game game;
-    game.run();
-    return 0;
+    m_map.load("Maps/level1.tmx");
+}
+
+void GameplayState::exit()
+{
+
+}
+
+void GameplayState::pause()
+{
+
+}
+
+void GameplayState::resume()
+{
+
+}
+
+void GameplayState::handleEvent(const sf::Event &t_event)
+{
+
+}
+
+void GameplayState::update(const sf::Time& t_elapsedTime)
+{
+    m_map.update(t_elapsedTime);
+}
+
+void GameplayState::draw(sf::RenderTarget &target, sf::RenderStates states) const
+{
+    target.draw(m_map, states);
 }

@@ -29,8 +29,8 @@ SOFTWARE.
 
 #include "map.hpp"
 
-Map::Map(const std::string& t_basepath)
-    : m_loader(t_basepath), m_pathLay(tmx::Layer)
+Map::Map(unsigned int t_life, const std::string& t_basepath)
+    : m_loader(t_basepath), m_pathLay(tmx::Layer), m_lives(t_life), m_maxLives(m_lives)
 {
     thor::FadeAnimation fadeOut(0.3f, 0.7f);
     thor::FadeAnimation fadeIn(0.3f, 0.f);
@@ -38,15 +38,8 @@ Map::Map(const std::string& t_basepath)
     m_spriteAnimator.addAnimation("selectedTile_fadeOut", fadeOut, sf::seconds(0.3f));
     m_spriteAnimator.addAnimation("selectedTile_fadeIn", fadeIn, sf::seconds(0.3f));
 
+    m_selectedTile.setTexture(TextureHolder::instance().get("selectedTile"));
     m_selectedTile.setColor(sf::Color(0, 0, 0, 0));
-}
-
-void Map::setTextureHolder(const TextureHolder &t_textures)
-{
-    m_selectedTile.setTexture(t_textures.get(Textures::SelectedTile));
-    m_selectedTile.setColor(sf::Color(0, 255, 0, 0));
-    m_selectedTile.setScale(m_loader.tileSize().x / m_selectedTile.getLocalBounds().width,
-                           m_loader.tileSize().y / m_selectedTile.getLocalBounds().height);
 }
 
 void Map::handleMouseClick(sf::Mouse::Button t_button, int t_x, int t_y)
@@ -80,7 +73,9 @@ void Map::handleMouseClick(sf::Mouse::Button t_button, int t_x, int t_y)
 
 void Map::load(const std::string &t_filename)
 {
-    m_waves.clear();
+    // Clear inactive waves by swapping wave queue to empty queue
+    decltype(m_inactiveWaves)().swap(m_inactiveWaves);
+    m_activeWaves.clear();
     m_towers.clear();
     if (!m_loader.Load(t_filename))
     {
@@ -93,37 +88,77 @@ void Map::load(const std::string &t_filename)
     {
         m_path.push_back(tile.gridCoord);
     }
+    for (auto& point : m_path)
+    {
+        point += sf::Vector2f(m_loader.tileSize()) / 2.f;
+    }
+    m_selectedTile.setScale(m_loader.tileSize().x / m_selectedTile.getTextureRect().width,
+                            m_loader.tileSize().y / m_selectedTile.getTextureRect().height);
 }
 
 void Map::draw(sf::RenderTarget& t_target, sf::RenderStates t_states) const
 {
     t_target.draw(m_loader, t_states);
-    t_target.draw(m_waves.front(), t_states);
+    for (const auto& wave : m_activeWaves)
+    {
+        t_target.draw(wave, t_states);
+    }
     t_target.draw(m_selectedTile, t_states);
 }
 
-unsigned int Map::launchWave()
+size_t Map::launchWave()
 {
-    m_waves[m_actualWave].launchWave();
+    if (m_inactiveWaves.size() <= 0)
+    {
+        std::cerr << "Cannot launch wave : no pending waves !\n" << std::flush;
+        return 0;
+    }
+    m_currentWaveDesc = m_inactiveWaves.front().description;
+    m_activeWaves.push_back(m_inactiveWaves.front());
+    m_inactiveWaves.pop();
+    m_activeWaves.back().launchWave();
 
-    return m_waves.size();
+    return m_inactiveWaves.size();
 }
 
 void Map::update(const sf::Time& t_elapsedTime)
 {
-    if (m_actualWave < m_waves.size())
+    for (auto& wave : m_activeWaves)
     {
-        m_waves[m_actualWave].update(t_elapsedTime, m_path);
-    }
-
-    if (m_waves[m_actualWave].done())
-    {
-        ++m_actualWave;
+        wave.update(t_elapsedTime, m_path);
     }
 
     m_shapeAnimator.update(t_elapsedTime);
     m_spriteAnimator.update(t_elapsedTime);
     m_spriteAnimator.animate(m_selectedTile);
+
+    unsigned int lostLives {};
+
+    for (const auto& wave : m_activeWaves)
+    {
+        lostLives += wave.lostLives();
+    }
+
+    if (m_maxLives <= lostLives)
+    {
+        m_lives = 0;
+    }
+    else
+    {
+        m_lives = m_maxLives - lostLives;
+    }
+
+    if (m_activeWaves.back().done())
+    {
+        if (m_inactiveWaves.size() > 0)
+        {
+            m_currentWaveDesc = m_inactiveWaves.front().description;
+        }
+        else
+        {
+            m_currentWaveDesc = "";
+        }
+    }
 }
 
 void Map::initMapPoints()
@@ -210,7 +245,7 @@ tmx::MapTiles Map::reorderedTiles(const tmx::MapTiles& t_tiles,
                                   const sf::Vector2f& t_startTile) const
 {
     tmx::MapTiles finalTileList;
-    finalTileList.push_back(tmx::MapTile(t_startTile, m_loader.tileSize()));
+    finalTileList.emplace_back(t_startTile, m_loader.tileSize());
     for (size_t i {}; i < finalTileList.size(); ++i)
     {
         for (const auto& adjTile : adjacentTiles(finalTileList[i]))
@@ -276,11 +311,11 @@ tmx::MapTiles Map::adjacentTiles(const tmx::MapTile &t_tile) const
                 tmx::MapTile(t_tile.gridCoord.x - m_loader.tileSize().x,
                              t_tile.gridCoord.y + m_loader.tileSize().y,
                              m_loader.tileSize().x, m_loader.tileSize().y),
-                tmx::MapTile(t_tile.gridCoord.x - m_loader.tileSize().x,
+                tmx::MapTile(static_cast<unsigned int>(t_tile.gridCoord.x) - m_loader.tileSize().x,
                              t_tile.gridCoord.y,
                              m_loader.tileSize().x, m_loader.tileSize().y),
                 tmx::MapTile(t_tile.gridCoord.x - m_loader.tileSize().x,
-                             t_tile.gridCoord.y - m_loader.tileSize().y,
+                             static_cast<unsigned int>(t_tile.gridCoord.y) - m_loader.tileSize().y,
                              m_loader.tileSize().x, m_loader.tileSize().y)
 
     };

@@ -47,7 +47,7 @@ SOFTWARE.
 class Wave : public sf::Drawable
 {
     public:
-        explicit Wave(const sf::Time& t_delay = sf::seconds(1));
+        Wave(const std::string& t_description = "", const sf::Time& t_delay = sf::seconds(1));
         ~Wave() = default;
 
         void addEnemy(const Enemy& t_enemy, unsigned int amount = 1);
@@ -58,12 +58,23 @@ class Wave : public sf::Drawable
 
         bool done() const;
 
+        unsigned int lostLives() const
+        { return m_lostLives; }
+
+        // Provided for lua
+        void setDescription(const std::string& t_desc)
+        { description = t_desc; }
+
+    public:
+        std::string description {};
+
     protected:
         virtual void draw(sf::RenderTarget& t_target, sf::RenderStates t_states) const;
 
     private:
         std::vector<Enemy> m_wave;
         size_t m_remainingEnemies {};
+        unsigned int m_lostLives {};
         const sf::Time m_delay {};
         thor::Timer m_timer;
 

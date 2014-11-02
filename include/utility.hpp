@@ -42,9 +42,11 @@ SOFTWARE.
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Graphics/Rect.hpp>
 
+#include <Thor/Animations/FrameAnimation.hpp>
+
 #include <SFML/Config.hpp>
 
-#define SFTD_UNUSED(x) (void)(sizeof((x), 0))
+#define SFTD_UNUSED(x) (void)(x)
 
 std::string getFileContents(const std::string& filename);
 
@@ -60,7 +62,7 @@ inline size_t xyToTileIndex(unsigned int t_x, unsigned int t_y,
     return t_y * t_mapWidth / t_tileWidth + t_x;
 }
 
-inline sf::Vector2u tileIndexToXy(size_t t_index,
+inline sf::Vector2u tileIndexToXy(unsigned t_index,
                                   unsigned int t_tileWidth, unsigned int t_tileHeight)
 {
     return sf::Vector2u(t_index * t_tileWidth, t_index * t_tileHeight);
@@ -122,6 +124,32 @@ std::ostream& operator<<(std::ostream& t_os, const sf::Rect<T> & t_n)
 {
     return t_os << "sfRect({" << t_n.left << ", " << t_n.top << "}, "
                 << "{"        << t_n.width << ", " << t_n.height << "})";
+}
+
+inline void addFramesY(thor::FrameAnimation& animation, int x, int yFirst,
+                int yLast, int xMultiple, int yMultiple, float duration = 1.f)
+{
+    const int step = (yFirst < yLast) ? +1 : -1;
+    yLast += step; // so yLast is excluded in the range
+
+    for (int y {yFirst}; y != yLast; y += step)
+    {
+        animation.addFrame(duration, sf::IntRect(xMultiple*x, yMultiple*y,
+                                                 xMultiple, yMultiple));
+    }
+}
+
+inline void addFramesX(thor::FrameAnimation& animation, int y, int xFirst,
+                int xLast, int xMultiple, int yMultiple, float duration = 1.f)
+{
+    const int step = (xFirst < xLast) ? +1 : -1;
+    xLast += step; // so yLast is excluded in the range
+
+    for (int x {xFirst}; x != xLast; x += step)
+    {
+        animation.addFrame(duration, sf::IntRect(xMultiple*x, yMultiple*y,
+                                                 xMultiple, yMultiple));
+    }
 }
 
 #endif // UTILITY_HPP

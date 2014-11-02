@@ -31,6 +31,7 @@ SOFTWARE.
 #define ENTITY_HPP
 
 #include <string>
+#include <unordered_map>
 
 #include <SFML/Graphics/Rect.hpp>
 
@@ -42,6 +43,8 @@ SOFTWARE.
 
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Transformable.hpp>
+
+#include <boost/any.hpp>
 
 #include "utility.hpp"
 
@@ -125,14 +128,27 @@ class Entity : public sf::Transformable, public sf::Drawable
 
         bool hidden() const { return !visible(); }
 
+        void setProperty(const std::string& t_id, const boost::any t_data = boost::any())
+        { m_properties[t_id] = t_data; }
+
+        void removeProperty(const std::string& t_id)
+        { m_properties.erase(t_id); }
+
+        boost::any propertyAt(const std::string& t_id) const
+        { return m_properties.at(t_id); }
+
+        bool hasProperty(const std::string& t_id) const
+        { return m_properties.find(t_id) != m_properties.end(); }
+
     protected:
         virtual void draw(sf::RenderTarget &t_target, sf::RenderStates t_states) const;
 
     protected:
-        bool m_visible;
-        std::string m_name;
-        sf::Sprite m_sprite;
-        sf::Vector2f m_movement;
+        std::string m_name {};
+        sf::Sprite m_sprite {};
+        sf::Vector2f m_movement {};
+        std::unordered_map<std::string, boost::any> m_properties {};
+        bool m_visible { false };
 };
 
 #endif // ENTITY_HPP

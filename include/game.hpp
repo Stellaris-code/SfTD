@@ -45,11 +45,14 @@ SOFTWARE.
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
+#include <TGUI/TGUI.hpp>
+
 #include <Thor/Vectors.hpp>
 
 #include <luawrapper/LuaContext.hpp>
 
 #include "map.hpp"
+#include "topbar.hpp"
 #include "resourceHolder.hpp"
 #include "resourceIdentifiers.hpp"
 #include "utility.hpp"
@@ -67,16 +70,17 @@ class Game : private sf::NonCopyable
         void handlePlayerInput(sf::Keyboard::Key t_key, bool t_isPressed);
 
     private:
+        sf::RenderWindow m_window {};
+        sf::Text m_statisticsText {};
+        sf::Time m_statisticsUpdateTime {};
+        std::size_t m_statisticsNumFrames {};
         static const sf::Time m_timePerFrame;
-        sf::RenderWindow m_window;
-        sf::Text m_statisticsText;
-        sf::Time m_statisticsUpdateTime;
-        std::size_t m_statisticsNumFrames;
-        sf::Clock m_shaderClock;
-        Map m_map;
-        TextureHolder m_textures;
-        FontHolder m_fonts;
-        Wave wave;
+        sf::Clock m_shaderClock {};
+        Map m_map {};
+        Wave wave {};
+        TopBarModel m_topbarModel {100, 100, 10000, ""};
+        TopBarView m_topbarView;
+        tgui::Gui m_gui {};
 };
 
 #endif // GAME_HPP

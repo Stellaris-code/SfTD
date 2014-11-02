@@ -29,8 +29,8 @@ SOFTWARE.
 
 #include "wave.hpp"
 
-Wave::Wave(const sf::Time &t_delay)
-    : m_delay(t_delay)
+Wave::Wave(const std::string& t_description, const sf::Time &t_delay)
+    : description(t_description), m_delay(t_delay)
 {
     m_timer.reset(m_delay);
 }
@@ -42,6 +42,7 @@ void Wave::addEnemy(const Enemy &t_enemy, unsigned int amount)
         ++m_remainingEnemies;
         m_wave.push_back(t_enemy);
         m_wave.back().hide();
+        m_wave.back().setProperty("waiting");
     }
 }
 
@@ -56,10 +57,11 @@ void Wave::update(const sf::Time &t_elapsedTime, const std::vector<sf::Vector2f>
     {
         for (auto& enemy : m_wave)
         {
-            if (enemy.hidden())
+            if (enemy.hidden() && enemy.hasProperty("waiting"))
             {
                 --m_remainingEnemies;
                 enemy.show();
+                enemy.removeProperty("waiting");
                 m_timer.restart(m_delay / enemy.speed());
                 break;
             }
@@ -75,6 +77,7 @@ void Wave::update(const sf::Time &t_elapsedTime, const std::vector<sf::Vector2f>
             {
                 if (enemy.incCurrPoint() == t_path.size())
                 {
+                    m_lostLives++;
                     enemy.hide();
                 }
                 else
@@ -83,7 +86,7 @@ void Wave::update(const sf::Time &t_elapsedTime, const std::vector<sf::Vector2f>
                                                   t_path[enemy.currPoint()] - enemy.pos());
 
                     enemy.setVelocity(unitVector);
-                    //enemy.setRotation(thor::toDegree(std::atan2(unitVector.x, unitVector.y)));
+                    //enemy.setRotation(-thor::toDegree(std::atan2(unitVector.x, unitVector.y)));
                 }
             }
             enemy.update(t_elapsedTime);

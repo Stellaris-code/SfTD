@@ -29,24 +29,14 @@ SOFTWARE.
 #ifndef RESOURCEIDENTIFIERS_H
 #define RESOURCEIDENTIFIERS_H
 
+#include <string>
+
 // Forward declaration of SFML classes
 namespace sf
 {
 class Texture;
 class Font;
 class SoundBuffer;
-}
-
-namespace Textures
-{
-
-enum ID
-{
-    Beetle,
-    Explosion,
-    SelectedTile
-};
-
 }
 
 namespace Fonts
@@ -69,7 +59,7 @@ enum ID
     Explosion2,
     LaunchMissile,
     CollectPickup,
-    Button,
+    Button
 };
 }
 
@@ -77,7 +67,7 @@ enum ID
 template <typename Resource, typename Identifier>
 class ResourceHolder;
 
-typedef ResourceHolder<sf::Texture, Textures::ID> TextureHolder;
+typedef ResourceHolder<sf::Texture, std::string> TextureHolder;
 
 typedef ResourceHolder<sf::Font, Fonts::ID> FontHolder;
 

@@ -1,6 +1,7 @@
-/** @file main.cpp
+/** @file state.hpp
+State
 @author jim
-@date 19/09/2014
+@date 28/10/2014
 
 The MIT License (MIT)
 
@@ -26,16 +27,36 @@ SOFTWARE.
 
 */
 
+#ifndef STATE_HPP
+#define STATE_HPP
+
+#include <SFML/Graphics/Drawable.hpp>
+#include <SFML/System/Time.hpp>
+#include <SFML/Window/Event.hpp>
+
 #include "game.hpp"
 
-int main()
+class State : public sf::Drawable
 {
-    TextureHolder::instance().load("explosion", "assets/explosion.png");
-    TextureHolder::instance().load("selectedTile", "assets/selected.png");
+    public:
+        State(Game& t_engine)
+            : m_engine(t_engine)
+        {}
 
-    FontHolder::instance().load(Fonts::Main, "fonts/Ubuntu-M.ttf");
+    public:
+        virtual void pause() = 0;
+        virtual void resume() = 0;
 
-    Game game;
-    game.run();
-    return 0;
-}
+        virtual void init() = 0;
+        virtual void exit() = 0;
+
+        virtual void handleEvent(const sf::Event& t_event) = 0;
+
+        virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const = 0;
+        virtual void update(const sf::Time& t_elapsedTime) = 0;
+
+    protected:
+        Game& m_engine;
+};
+
+#endif // STATE_HPP

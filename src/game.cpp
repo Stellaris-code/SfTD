@@ -33,33 +33,29 @@ const sf::Time Game::m_timePerFrame = sf::seconds(1.f / 60.f);
 
 Game::Game()
     :
-      m_window(sf::VideoMode(480, 480), "SFML Application", sf::Style::Default,
-               sf::ContextSettings(0, 0, 4)),
-      m_statisticsNumFrames(0), m_map("Maps")
+      m_window(sf::VideoMode(480, 520), "SFML Application", sf::Style::Default),
+      m_statisticsNumFrames(0), m_map(20, "Maps"), m_topbarModel { 20, 20, 10000, ""},
+      m_topbarView(m_topbarModel)
 {
+
+    m_gui.setWindow(m_window);
+
+    m_gui.setGlobalFont(FontHolder::instance().get(Fonts::Main));
+
+    m_topbarView.setGui(m_gui);
+
     m_map.loadShaderFromFile("water", "shaders/water.frag", sf::Shader::Fragment);
     
     m_map.load("Maps/level1.tmx");
-    
-    m_textures.load(Textures::Beetle, "beetles.png");
-    m_textures.load(Textures::Explosion, "explosion.png");
-    m_textures.load(Textures::SelectedTile, "selected.png");
-    
-    m_fonts.load(Fonts::Main, "fonts/Ubuntu-M.ttf");
-    
-    m_map.setTextureHolder(m_textures);
 
     m_statisticsText.setFont(
-                m_fonts.get(Fonts::Main));
+                FontHolder::instance().get(Fonts::Main));
     m_statisticsText.setPosition(5.f, 5.f);
     m_statisticsText.setCharacterSize(10);
 
-    Enemy enemy2("Gérard", sf::Vector2f(10, 10), sf::Vector2f(1.f, 1.f), 100,
-                 Enemy::Type::Ground, DmgType::Fire);
+    m_topbarView.setSize(sf::Vector2f(480, 40));
 
-    enemy2.setPosition( m_map.startPoint() * 32.f);
-    enemy2.setTextureHolder(m_textures);
-    enemy2.setFontHolder(m_fonts);
+    m_topbarView.setPosition(0, 480);
 
     LuaContext lua;
     lua.writeVariable("dmg_fire", DmgType::Fire);
@@ -68,47 +64,91 @@ Game::Game()
     lua.writeVariable("dmg_poison", DmgType::Poison);
     lua.writeVariable("dmg_shock", DmgType::Shock);
 
-    std::function<void(const std::string&, DmgType, unsigned int, float, bool)>
-            add_enemy_to_wave = [this](const std::string& name, DmgType dmgtype,
-                                unsigned int amount, float speed, bool lifebar_visible)
+    std::function<Enemy(const std::string&, const std::string&, DmgType, float, bool)>
+            createEnemy = [this](const std::string& name, const std::string& t_textureID,
+                          DmgType dmgtype, float speed, bool lifebar_visible)
     {
         Enemy enemy(name, sf::Vector2f(0, 0), sf::Vector2f(1.f, 1.f), 100,
                     Enemy::Type::Ground, dmgtype);
+        enemy.setTexture(TextureHolder::instance().get(t_textureID));
 
-        enemy.setPosition( m_map.startPoint() * 32.f);
-        enemy.setTextureHolder(m_textures);
-        enemy.setFontHolder(m_fonts);
+        enemy.setPosition(m_map.startPoint() * 32.f + sf::Vector2f(m_map.tileSize()) / 2.f);
         enemy.setLifebarVisibility(lifebar_visible);
         enemy.setSpeed(speed);
-        wave.addEnemy(enemy, amount);
+        return enemy;
     };
-    lua.writeVariable("add_enemy_to_wave", add_enemy_to_wave);
-    std::ifstream luaFile("test.lua");
+    lua.writeFunction("registerTexture", [](const std::string& t_id,
+                                            const std::string& t_filepath)
+    {
+        TextureHolder::instance().load(t_id, t_filepath);
+    });
+    lua.writeFunction("newFrameAnimation", []{ return thor::FrameAnimation(); });
+    lua.writeFunction("intrect", [](int t_left, int t_top, int t_width, int t_height)
+    {
+        return sf::IntRect(t_left, t_top, t_width, t_height);
+    });
+    lua.writeFunction("floatrect", [](float t_left, float t_top, float t_width, float t_height)
+    {
+        return sf::FloatRect(t_left, t_top, t_width, t_height);
+    });
+    lua.writeFunction("seconds", [](float t_time)
+    {
+        return sf::seconds(t_time);
+    });
+    lua.writeFunction("milliseconds", [](sf::Int32 t_time)
+    {
+        return sf::milliseconds(t_time);
+    });
+    lua.writeFunction("microseconds", [](sf::Int64 t_time)
+    {
+        return sf::microseconds(t_time);
+    });
+    lua.registerFunction("addFrame", &thor::FrameAnimation::addFrame);
+    lua.writeFunction("addFramesX", addFramesX);
+    lua.writeFunction("addFramesY", addFramesY);
+    lua.registerFunction("setMoveAnimation", &Enemy::setMoveAnimation);
+    lua.registerFunction("setDieAnimation", &Enemy::setDieAnimation);
+    lua.writeFunction("createEnemy", createEnemy);
+    lua.registerFunction("addEnemy", &Wave::addEnemy);
+    lua.registerFunction("setDescription", &Wave::setDescription);
+    lua.writeFunction("newWave", [](const std::string& t_desc, const sf::Time& t_interval)
+    { return Wave(t_desc, t_interval); });
+    lua.writeFunction("addWave", [this](const Wave& t_wave){ m_map.addWave(t_wave);});
+    std::ifstream luaFile("main.lua");
+    if (luaFile.is_open())
+    {
     try
     {
         lua.executeCode(luaFile);
     }
-    catch (const LuaContext::ExecutionErrorException& e)
+    catch (const LuaContext::ExecutionErrorException& eee)
     {
-        std::cerr << e.what() << std::endl;           // prints an error message
+        std::cerr << eee.what() << "\n";           // prints an error message
 
         try
         {
-            std::rethrow_if_nested(e);
+            std::rethrow_if_nested(eee);
         }
-        catch (const std::runtime_error& e)
+        catch (const std::exception& e)
         {
-            // e is the exception that was thrown from inside the lambda
-            std::cerr << e.what() << std::endl;       // prints "Problem"
+            // re is the exception that was thrown from inside the lambda
+            std::cerr << e.what() << "\n";
+            if (std::string(e.what()) == "basic_string::_S_construct null not valid")
+            {
+                std::cerr << "This usually mean syntax error or a mispell in function call, "
+                             "or using an undeclared variable/function. Exiting.\n";
+                throw;
+            }
         }
     }
-    
-    m_map.addWave(wave);
+    }
+    else
+    {
+        std::cerr << "Cannot open main.lua !\n";
+    }
     
     m_map.launchWave();
     
-    m_window.setView(sf::View(sf::FloatRect(sf::Vector2f(0, 0),
-                                            sf::Vector2f(m_map.mapSize()))));
     m_window.setKeyRepeatEnabled(false);
 
 }
@@ -117,8 +157,7 @@ void Game::run()
 {
     sf::Clock clock;
     sf::Time timeSinceLastUpdate = sf::Time::Zero;
-    while (
-           m_window.isOpen())
+    while (m_window.isOpen())
     {
         sf::Time elapsedTime = clock.restart();
         timeSinceLastUpdate += elapsedTime;
@@ -139,6 +178,8 @@ void Game::processEvents()
     while (
            m_window.pollEvent(event))
     {
+        m_gui.handleEvent(event);
+
         switch (event.type)
         {
         case sf::Event::KeyPressed:
@@ -155,6 +196,35 @@ void Game::processEvents()
             m_window.close();
             break;
 
+        case sf::Event::Resized:
+            break;
+        case sf::Event::LostFocus:
+            break;
+        case sf::Event::GainedFocus:
+            break;
+        case sf::Event::TextEntered:
+            break;
+        case sf::Event::MouseWheelMoved:
+            break;
+        case sf::Event::MouseButtonReleased:
+            break;
+        case sf::Event::MouseMoved:
+            break;
+        case sf::Event::MouseEntered:
+            break;
+        case sf::Event::MouseLeft:
+            break;
+        case sf::Event::JoystickButtonPressed:
+            break;
+        case sf::Event::JoystickButtonReleased:
+            break;
+        case sf::Event::JoystickMoved:
+            break;
+        case sf::Event::JoystickConnected:
+             break;
+        case sf::Event::JoystickDisconnected:
+            break;
+
         default:
             break;
         }
@@ -164,6 +234,10 @@ void Game::processEvents()
 void Game::update(const sf::Time& t_elapsedTime)
 {
     m_map.update(t_elapsedTime);
+    m_topbarModel.lives = m_map.remainingLives();
+    m_topbarModel.maxLives = m_map.maxLives();
+    m_topbarModel.description = m_map.waveDescription();
+    m_topbarView.update();
 }
 void Game::render()
 {
@@ -174,6 +248,10 @@ void Game::render()
     m_window.draw(m_map);
     
     m_window.draw(m_statisticsText);
+
+    m_window.draw(m_topbarView);
+
+    m_gui.draw();
     
     m_window.display();
 }
@@ -197,32 +275,6 @@ void Game::updateStatistics(const sf::Time& t_elapsedTime)
 
 void Game::handlePlayerInput(sf::Keyboard::Key t_key, bool t_isPressed)
 {
-//    if (t_key == sf::Keyboard::W && t_isPressed)
-//    {
-//        enemy.takeDamage(10, DmgType::Poison);
-//        std::cerr << "Poison !\n";
-//    }
-//    if (t_key == sf::Keyboard::X && t_isPressed)
-//    {
-//        enemy.takeDamage(10, DmgType::Ice);
-//        std::cerr << "Ice !\n";
-//    }
-//    if (t_key == sf::Keyboard::C && t_isPressed)
-//    {
-//        enemy.takeDamage(10, DmgType::Fire);
-//        std::cerr << "Fire !\n";
-//    }
-//    if (t_key == sf::Keyboard::V && t_isPressed)
-//    {
-//        enemy.takeDamage(10, DmgType::Shock);
-//        std::cerr << "Shock !\n";
-//    }
-//    if (t_key == sf::Keyboard::B && t_isPressed)
-//    {
-//        enemy.takeDamage(10, DmgType::Physical);
-//        std::cerr << "Physical !\n";
-//    }
-
     if (t_key == sf::Keyboard::N && t_isPressed)
     {
         m_map.launchWave();

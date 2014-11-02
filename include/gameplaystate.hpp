@@ -1,6 +1,7 @@
-/** @file main.cpp
+/** @file gameplaystate.hpp
+GameplaySate
 @author jim
-@date 19/09/2014
+@date 29/10/2014
 
 The MIT License (MIT)
 
@@ -26,16 +27,35 @@ SOFTWARE.
 
 */
 
-#include "game.hpp"
+#ifndef GAMESTATE_HPP
+#define GAMESTATE_HPP
 
-int main()
+#include "state.hpp"
+
+class GameplayState : public State
 {
-    TextureHolder::instance().load("explosion", "assets/explosion.png");
-    TextureHolder::instance().load("selectedTile", "assets/selected.png");
+    public:
+        GameplayState(Game& t_engine);
 
-    FontHolder::instance().load(Fonts::Main, "fonts/Ubuntu-M.ttf");
+    public:
+        virtual void pause();
+        virtual void resume();
 
-    Game game;
-    game.run();
-    return 0;
-}
+
+        using State::init;
+        virtual void init(const TextureHolder& t_th, const FontHolder& t_fh);
+        virtual void exit();
+
+        virtual void handleEvent(const sf::Event& t_event);
+
+        virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const;
+        virtual void update(const sf::Time& t_elapsedTime);
+
+    private:
+        sf::Clock m_shaderClock {};
+        Map m_map {};
+        Wave wave {};
+
+};
+
+#endif // GAMESTATE_HPP
