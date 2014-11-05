@@ -28,6 +28,8 @@ SOFTWARE.
 
 #include "game.hpp"
 
+#include "gameplaystate.hpp"
+
 int main()
 {
     TextureHolder::instance().load("explosion", "assets/explosion.png");
@@ -36,6 +38,8 @@ int main()
     FontHolder::instance().load(Fonts::Main, "fonts/Ubuntu-M.ttf");
 
     Game game;
+    GameplayState s(game);
+    game.changeState(s);
     game.run();
     return 0;
 }

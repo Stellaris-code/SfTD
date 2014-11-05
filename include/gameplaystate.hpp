@@ -30,10 +30,13 @@ SOFTWARE.
 #ifndef GAMESTATE_HPP
 #define GAMESTATE_HPP
 
+#include <SFGUI/SFGUI.hpp>
+
 #include "state.hpp"
 
 class GameplayState : public State
 {
+
     public:
         GameplayState(Game& t_engine);
 
@@ -41,20 +44,19 @@ class GameplayState : public State
         virtual void pause();
         virtual void resume();
 
-
-        using State::init;
-        virtual void init(const TextureHolder& t_th, const FontHolder& t_fh);
-        virtual void exit();
-
         virtual void handleEvent(const sf::Event& t_event);
 
-        virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const;
         virtual void update(const sf::Time& t_elapsedTime);
+
+        virtual void display(sf::RenderWindow& t_window);
 
     private:
         sf::Clock m_shaderClock {};
         Map m_map {};
-        Wave wave {};
+        TopBarModel m_topbarModel {100, 100, 10000};
+        TopBarView m_topbarView { m_topbarModel };
+        sfg::SFGUI m_gui {};
+        sfg::Desktop m_desktop {};
 
 };
 

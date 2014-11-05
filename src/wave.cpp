@@ -29,8 +29,8 @@ SOFTWARE.
 
 #include "wave.hpp"
 
-Wave::Wave(const std::string& t_description, const sf::Time &t_delay)
-    : description(t_description), m_delay(t_delay)
+Wave::Wave(const sf::Time &t_delay)
+    : m_delay(t_delay)
 {
     m_timer.reset(m_delay);
 }

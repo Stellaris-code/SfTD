@@ -31,6 +31,8 @@ SOFTWARE.
 #define TOPBAR_HPP
 
 #include <string>
+#include <functional>
+#include <map>
 
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
@@ -40,10 +42,12 @@ SOFTWARE.
 
 #include <SFML/System/Vector2.hpp>
 
-#include <TGUI/TGUI.hpp>
+#include <SFGUI/SFGUI.hpp>
 
 #include "resourceHolder.hpp"
 #include "resourceIdentifiers.hpp"
+
+#include "constants.hpp"
 
 #include "utility.hpp"
 
@@ -52,11 +56,11 @@ struct TopBarModel
         unsigned int lives;
         unsigned int maxLives;
         unsigned int funds;
-        std::string description;
 };
 
 class TopBarView : public sf::Drawable, public sf::Transformable
 {
+
     public:
         TopBarView(TopBarModel& t_model);
 
@@ -70,17 +74,22 @@ class TopBarView : public sf::Drawable, public sf::Transformable
 
         void setSize(const sf::Vector2f& t_size);
 
-        void setGui(tgui::Gui& t_gui);
+        void setDesktop(sfg::Desktop& t_desk);
+
+        void assignCallback(std::function<void()> t_function, Callbacks t_type);
+
 
     protected:
         void draw(sf::RenderTarget &t_target, sf::RenderStates t_states) const;
 
+
     private:
         TopBarModel& m_model;
-        sf::Font m_font;
-        sf::Text m_lifeLabel;
         sf::RectangleShape m_background;
-        tgui::TextBox::Ptr m_description;
+        sfg::Label::Ptr m_curLife;
+        sfg::Label::Ptr m_funds;
+        sfg::Button::Ptr m_launchWaveButton;
+        sfg::Table::Ptr m_layout;
 };
 
 #endif // TOPBAR_HPP

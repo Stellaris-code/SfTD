@@ -36,8 +36,11 @@ SOFTWARE.
 
 #include "game.hpp"
 
-class State : public sf::Drawable
+class Game;
+
+class State
 {
+
     public:
         State(Game& t_engine)
             : m_engine(t_engine)
@@ -47,13 +50,11 @@ class State : public sf::Drawable
         virtual void pause() = 0;
         virtual void resume() = 0;
 
-        virtual void init() = 0;
-        virtual void exit() = 0;
-
         virtual void handleEvent(const sf::Event& t_event) = 0;
 
-        virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const = 0;
         virtual void update(const sf::Time& t_elapsedTime) = 0;
+
+        virtual void display(sf::RenderWindow& t_window) = 0;
 
     protected:
         Game& m_engine;

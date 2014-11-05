@@ -77,7 +77,6 @@ class Map : public sf::Drawable
         void addWave(const Wave& wave)
         {
             m_inactiveWaves.push(wave);
-            m_currentWaveDesc = m_inactiveWaves.front().description;
         }
 
         size_t launchWave();
@@ -134,9 +133,6 @@ class Map : public sf::Drawable
         unsigned int remainingLives() const { return m_lives; }
         unsigned int maxLives() const { return m_maxLives; }
 
-        const std::string& waveDescription()
-        { return m_currentWaveDesc; }
-
     protected:
         virtual void draw(sf::RenderTarget& t_target, sf::RenderStates t_states) const;
 
@@ -166,7 +162,6 @@ class Map : public sf::Drawable
         const unsigned int m_maxLives { 50 };
         thor::Animator<sf::Shape, std::string> m_shapeAnimator;
         thor::Animator<sf::Sprite, std::string> m_spriteAnimator;
-        std::string m_currentWaveDesc;
 };
 
 #endif // MAP_HPP

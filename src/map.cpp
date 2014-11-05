@@ -113,7 +113,6 @@ size_t Map::launchWave()
         std::cerr << "Cannot launch wave : no pending waves !\n" << std::flush;
         return 0;
     }
-    m_currentWaveDesc = m_inactiveWaves.front().description;
     m_activeWaves.push_back(m_inactiveWaves.front());
     m_inactiveWaves.pop();
     m_activeWaves.back().launchWave();
@@ -146,18 +145,6 @@ void Map::update(const sf::Time& t_elapsedTime)
     else
     {
         m_lives = m_maxLives - lostLives;
-    }
-
-    if (m_activeWaves.back().done())
-    {
-        if (m_inactiveWaves.size() > 0)
-        {
-            m_currentWaveDesc = m_inactiveWaves.front().description;
-        }
-        else
-        {
-            m_currentWaveDesc = "";
-        }
     }
 }
 

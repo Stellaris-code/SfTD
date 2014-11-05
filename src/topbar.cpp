@@ -32,47 +32,74 @@ SOFTWARE.
 TopBarView::TopBarView(TopBarModel &t_model)
     : m_model(t_model)
 {
+    m_curLife = sfg::Label::Create();
+    m_funds = sfg::Label::Create();
+    m_launchWaveButton = sfg::Button::Create("Launch next wave");
+    m_layout = sfg::Table::Create();
+
     m_background.setSize(sf::Vector2f(200, 200));
     m_background.setFillColor(sf::Color(104, 161, 227));
-    m_background.setOutlineThickness(5);
-    m_background.setOutlineColor(sf::Color(100, 100, 100));
 
-    m_font = FontHolder::instance().get(Fonts::Main);
-    m_lifeLabel.setFont(m_font);
-    m_lifeLabel.setColor(sf::Color::White);
-    m_lifeLabel.setCharacterSize(24);
+    m_layout->Attach(m_curLife, {0, 0, 1, 1});
+    m_layout->Attach(m_funds, {1, 0, 1, 1});
+    m_layout->Attach(m_launchWaveButton, {2, 0, 1, 1});
 
-    m_description->setReadOnly();
-    m_description->setBackgroundColor(sf::Color::Transparent);
-    m_description->setTextSize(16);
-    m_description->setTextColor(sf::Color::White);
-    m_description->setSize(m_background.getSize().x - 100, m_background.getSize().y - 10);
-    m_description->setPosition(getPosition().x + 100, getPosition().y);
+    std::shared_ptr<sf::Font> font =
+            std::make_shared<sf::Font>(FontHolder::instance().get(Fonts::Main));
+    sfg::Context::Get().GetEngine().GetResourceManager().SetDefaultFont(font);
+    sfg::Context::Get().GetEngine().SetProperty("*",
+                                                "Color", sf::Color::White);
+
+    m_layout->SetPosition(getPosition());
+
+    sfg::Context::Get().GetEngine().SetProperty(".decorative_frame",
+                                                "BorderWidth", 1.f);
+    sfg::Context::Get().GetEngine().SetProperty(".decorative_frame",
+                                                "Padding", 1.f);
+    sfg::Context::Get().GetEngine().SetProperty("#topbar_container",
+                                                "Padding", 3.f);
+
 }
 
-void TopBarView::setGui(tgui::Gui& t_gui)
+void TopBarView::setDesktop(sfg::Desktop& t_desk)
 {
-    t_gui.add(m_description, "Description");
+    t_desk.Add(m_layout);
+}
+
+void TopBarView::assignCallback(std::function<void ()> t_function, Callbacks t_type)
+{
+    switch (t_type)
+    {
+    case Callbacks::LaunchWaveButton:
+        m_launchWaveButton->GetSignal(sfg::Button::OnLeftClick).Connect(t_function);
+        break;
+    default:
+        break;
+    }
 }
 
 void TopBarView::update()
 {
-    m_lifeLabel.setString(std::to_string(m_model.lives) + "/" +
+    m_curLife->SetText(std::to_string(m_model.lives) + "/" +
                           std::to_string(m_model.maxLives));
 
-    m_description->setSize(m_background.getSize().x - 100, m_background.getSize().y - 10);
-    m_description->setPosition(getPosition().x + 100, getPosition().y);
-    m_description->setText(m_model.description);
+    m_funds->SetText(std::to_string(m_model.funds));
+
+    float separation = m_background.getSize().y - m_layout->GetRequisition().y;
+
+    m_layout->SetPosition({getPosition().x + 20.f, getPosition().y - separation / 2});
+    m_layout->SetRequisition({m_background.getSize().x - 40.f, separation / 2});
+
 }
 
 void TopBarView::setSize(const sf::Vector2f &t_size)
 {
     m_background.setSize(t_size);
+    update();
 }
 
 void TopBarView::draw(sf::RenderTarget &t_target, sf::RenderStates t_states) const
 {
     t_states.transform *= getTransform();
     t_target.draw(m_background, t_states);
-    t_target.draw(m_lifeLabel, t_states);
 }

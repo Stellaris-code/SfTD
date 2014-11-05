@@ -32,7 +32,7 @@ file(GLOB_RECURSE HPP_LIST include/*.hpp)
 
 find_package(SFML 2 REQUIRED system window graphics audio)
 find_package(Thor REQUIRED)
-find_package(TGUI REQUIRED)
+find_package(SFGUI REQUIRED)
 
 add_subdirectory("./extlibs/sfml-tmxloader")
 
@@ -55,7 +55,7 @@ target_link_libraries(${PROJECT_NAME} ${SFML_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${THOR_LIBRARY})
 target_link_libraries(${PROJECT_NAME} ${LUA_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} ${TGUI_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${SFGUI_LIBRARY})
 
 add_custom_target(VeraStyle ALL
   vera++ -s

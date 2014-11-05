@@ -45,4 +45,9 @@ enum class EntityType
     Projectile
 };
 
+enum class Callbacks
+{
+    LaunchWaveButton
+};
+
 #endif // CONSTANTS_HPP

@@ -35,6 +35,8 @@ SOFTWARE.
 #include <string>
 #include <functional>
 #include <fstream>
+#include <memory>
+#include <stack>
 
 #include <SFML/Graphics/Shader.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
@@ -45,42 +47,45 @@ SOFTWARE.
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
 
-#include <TGUI/TGUI.hpp>
-
 #include <Thor/Vectors.hpp>
 
 #include <luawrapper/LuaContext.hpp>
 
+#include "state.hpp"
 #include "map.hpp"
 #include "topbar.hpp"
 #include "resourceHolder.hpp"
 #include "resourceIdentifiers.hpp"
 #include "utility.hpp"
 
+class State;
+
 class Game : private sf::NonCopyable
 {
+        friend class GameplayState;
+
     public:
         Game();
+
         void run();
+
+        void changeState(State& t_state);
+        void pushState(State& t_state);
+        void popState();
+
     private:
         void processEvents();
         void update(const sf::Time& t_elapsedTime);
         void render();
         void updateStatistics(const sf::Time& t_elapsedTime);
-        void handlePlayerInput(sf::Keyboard::Key t_key, bool t_isPressed);
 
     private:
+        std::stack<std::reference_wrapper<State>> m_states;
         sf::RenderWindow m_window {};
         sf::Text m_statisticsText {};
         sf::Time m_statisticsUpdateTime {};
         std::size_t m_statisticsNumFrames {};
         static const sf::Time m_timePerFrame;
-        sf::Clock m_shaderClock {};
-        Map m_map {};
-        Wave wave {};
-        TopBarModel m_topbarModel {100, 100, 10000, ""};
-        TopBarView m_topbarView;
-        tgui::Gui m_gui {};
 };
 
 #endif // GAME_HPP
