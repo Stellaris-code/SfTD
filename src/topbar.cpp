@@ -39,25 +39,15 @@ TopBarView::TopBarView(TopBarModel &t_model)
 
     m_background.setSize(sf::Vector2f(200, 200));
     m_background.setFillColor(sf::Color(104, 161, 227));
+    m_background.setOutlineColor(sf::Color(100, 100, 100));
+    m_background.setOutlineThickness(3.f);
 
     m_layout->Attach(m_curLife, {0, 0, 1, 1});
     m_layout->Attach(m_funds, {1, 0, 1, 1});
     m_layout->Attach(m_launchWaveButton, {2, 0, 1, 1});
-
-    std::shared_ptr<sf::Font> font =
-            std::make_shared<sf::Font>(FontHolder::instance().get(Fonts::Main));
-    sfg::Context::Get().GetEngine().GetResourceManager().SetDefaultFont(font);
-    sfg::Context::Get().GetEngine().SetProperty("*",
-                                                "Color", sf::Color::White);
+    m_layout->SetId("topbar_container");
 
     m_layout->SetPosition(getPosition());
-
-    sfg::Context::Get().GetEngine().SetProperty(".decorative_frame",
-                                                "BorderWidth", 1.f);
-    sfg::Context::Get().GetEngine().SetProperty(".decorative_frame",
-                                                "Padding", 1.f);
-    sfg::Context::Get().GetEngine().SetProperty("#topbar_container",
-                                                "Padding", 3.f);
 
 }
 
@@ -87,7 +77,7 @@ void TopBarView::update()
 
     float separation = m_background.getSize().y - m_layout->GetRequisition().y;
 
-    m_layout->SetPosition({getPosition().x + 20.f, getPosition().y - separation / 2});
+    m_layout->SetPosition({getPosition().x + 20.f, getPosition().y});
     m_layout->SetRequisition({m_background.getSize().x - 40.f, separation / 2});
 
 }

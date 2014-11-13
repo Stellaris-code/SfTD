@@ -1,6 +1,7 @@
-/** @file wave.hpp
+/** @file scriptable.hpp
+Scriptable
 @author jim
-@date 19/09/2014
+@date 13/11/2014
 
 The MIT License (MIT)
 
@@ -26,49 +27,24 @@ SOFTWARE.
 
 */
 
-#ifndef WAVE_HPP
-#define WAVE_HPP
+#ifndef SCRIPTABLE_HPP
+#define SCRIPTABLE_HPP
 
-#include <cmath>
+#include <string>
 
-#include <vector>
+#include <luawrapper/LuaContext.hpp>
 
-#include <SFML/System/Time.hpp>
-#include <SFML/System/Vector2.hpp>
-
-#include <SFML/Graphics/Drawable.hpp>
-
-#include <Thor/Vectors/VectorAlgebra2D.hpp>
-
-#include "enemy.hpp"
-
-class Wave : public sf::Drawable
+class Scriptable
 {
     public:
-        Wave(const sf::Time& t_delay = sf::seconds(1));
-        ~Wave() = default;
-
-        void addEnemy(const Enemy& t_enemy, unsigned int amount = 1);
-
-        void launchWave();
-
-        void update(const sf::Time& t_elapsedTime, const std::vector<sf::Vector2f>& t_path);
-
-        bool done() const;
-
-        unsigned int lostLives() const
-        { return m_lostLives; }
-
-    protected:
-        virtual void draw(sf::RenderTarget& t_target, sf::RenderStates t_states) const;
+        virtual void executeScript(const std::string& t_filename) = 0;
+        virtual void initContext() = 0;
 
     private:
-        std::vector<Enemy> m_wave;
-        size_t m_remainingEnemies {};
-        unsigned int m_lostLives {};
-        const sf::Time m_delay {};
-        sf::Time m_elapsedTime { sf::Time::Zero };
+        void initContextCommon();
 
+    protected:
+        LuaContext m_context {};
 };
 
-#endif // WAVE_HPP
+#endif // SCRIPTABLE_HPP

@@ -63,15 +63,35 @@ class State;
 class Game : private sf::NonCopyable
 {
         friend class GameplayState;
+        friend class MenuState;
 
     public:
-        Game();
+        class GUI
+        {
+            public:
+                static sfg::SFGUI& instance()
+                {
+                    static sfg::SFGUI instance;
+                    return instance;
+                }
+        };
 
+    public:
+        static Game& instance()
+        {
+            static Game instance;
+            return instance;
+        }
+
+    public:
         void run();
 
         void changeState(State& t_state);
         void pushState(State& t_state);
         void popState();
+
+    private:
+        Game();
 
     private:
         void processEvents();

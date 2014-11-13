@@ -38,7 +38,7 @@ GameplayState::GameplayState(Game& t_engine)
 
     m_map.load("Maps/level1.tmx");
 
-    m_topbarView.setSize(sf::Vector2f(480, 80));
+    m_topbarView.setSize(sf::Vector2f(480, 40));
 
     m_topbarView.setPosition(0, 480);
 
@@ -134,17 +134,38 @@ GameplayState::GameplayState(Game& t_engine)
     m_topbarView.assignCallback(std::function<void()>([this]{ m_map.launchWave(); }),
                                 Callbacks::LaunchWaveButton);
 
-    m_desktop.SetProperty("Frame", "BorderWidth", 2.f);
+    m_desktop.LoadThemeFromFile("themes/main.theme");
+
+    if ((sfg::Renderer::Get().GetName() == "Vertex Array Renderer" )
+            && sfg::VertexBufferRenderer::IsAvailable())
+    {
+        std::shared_ptr<sfg::VertexBufferRenderer> renderer(
+                    std::make_shared<sfg::VertexBufferRenderer>());
+        sfg::Renderer::Set(renderer);
+        renderer->TuneUseFBO(true);
+        renderer->TuneAlphaThreshold(0.2f);
+        renderer->TuneCull(true);
+    }
+    else
+    {
+        std::shared_ptr<sfg::VertexArrayRenderer> renderer(
+                    std::make_shared<sfg::VertexArrayRenderer>());
+        sfg::Renderer::Set(renderer);
+        renderer->TuneAlphaThreshold(0.2f);
+        renderer->TuneCull(true);
+    }
+    m_desktop.Refresh();
+    update(sf::Time::Zero);
 }
 
 void GameplayState::pause()
 {
-
+    m_topbarView.setVisible(false);
 }
 
 void GameplayState::resume()
 {
-
+    m_topbarView.setVisible(true);
 }
 
 void GameplayState::handleEvent(const sf::Event &t_event)
@@ -160,6 +181,11 @@ void GameplayState::handleEvent(const sf::Event &t_event)
             m_map.launchWave();
         }
 
+        if (t_event.key.code == sf::Keyboard::Q)
+        {
+            m_engine.popState();
+        }
+
         break;
 
     case sf::Event::MouseButtonPressed:
@@ -173,11 +199,12 @@ void GameplayState::handleEvent(const sf::Event &t_event)
 
 void GameplayState::update(const sf::Time& t_elapsedTime)
 {
+    m_elapsedTime += t_elapsedTime;
     m_desktop.Update(t_elapsedTime.asSeconds());
     m_map.update(t_elapsedTime);
     m_topbarModel.lives = m_map.remainingLives();
     m_topbarModel.maxLives = m_map.maxLives();
-    m_map.setShaderParameter("water", "time", m_shaderClock.getElapsedTime().asSeconds());
+    m_map.setShaderParameter("water", "time", m_elapsedTime.asSeconds());
     m_topbarView.update();
 }
 
@@ -185,5 +212,5 @@ void GameplayState::display(sf::RenderWindow& t_window)
 {
     t_window.draw(m_map);
     t_window.draw(m_topbarView);
-    m_gui.Display(t_window);
+    Game::GUI::instance().Display(t_window);
 }

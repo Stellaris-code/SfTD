@@ -1,6 +1,7 @@
-/** @file wave.hpp
+/** @file menustate.hpp
+MenuState
 @author jim
-@date 19/09/2014
+@date 09/11/2014
 
 The MIT License (MIT)
 
@@ -26,49 +27,34 @@ SOFTWARE.
 
 */
 
-#ifndef WAVE_HPP
-#define WAVE_HPP
+#ifndef MENUSTATE_HPP
+#define MENUSTATE_HPP
 
-#include <cmath>
+#include <SFGUI/SFGUI.hpp>
 
-#include <vector>
+#include "state.hpp"
+#include "gameplaystate.hpp"
 
-#include <SFML/System/Time.hpp>
-#include <SFML/System/Vector2.hpp>
-
-#include <SFML/Graphics/Drawable.hpp>
-
-#include <Thor/Vectors/VectorAlgebra2D.hpp>
-
-#include "enemy.hpp"
-
-class Wave : public sf::Drawable
+class MenuState : public State
 {
+
     public:
-        Wave(const sf::Time& t_delay = sf::seconds(1));
-        ~Wave() = default;
+        MenuState(Game& t_engine);
 
-        void addEnemy(const Enemy& t_enemy, unsigned int amount = 1);
+    public:
+        virtual void pause();
+        virtual void resume();
 
-        void launchWave();
+        virtual void handleEvent(const sf::Event& t_event);
 
-        void update(const sf::Time& t_elapsedTime, const std::vector<sf::Vector2f>& t_path);
+        virtual void update(const sf::Time& t_elapsedTime);
 
-        bool done() const;
-
-        unsigned int lostLives() const
-        { return m_lostLives; }
-
-    protected:
-        virtual void draw(sf::RenderTarget& t_target, sf::RenderStates t_states) const;
+        virtual void display(sf::RenderWindow& t_window);
 
     private:
-        std::vector<Enemy> m_wave;
-        size_t m_remainingEnemies {};
-        unsigned int m_lostLives {};
-        const sf::Time m_delay {};
-        sf::Time m_elapsedTime { sf::Time::Zero };
+        sfg::Desktop m_desktop {};
+        sfg::Window::Ptr m_window {};
+        sfg::Box::Ptr m_layout {};
 
 };
-
-#endif // WAVE_HPP
+#endif // MENUSTATE_HPP

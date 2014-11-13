@@ -33,7 +33,8 @@ const sf::Time Game::m_timePerFrame = sf::seconds(1.f / 60.f);
 
 Game::Game()
     :
-      m_window(sf::VideoMode(480, 480 + 40), "SFML Application", sf::Style::Default),
+      m_window(sf::VideoMode(480, 480 + 40), "SFML Application",
+               sf::Style::Titlebar | sf::Style::Close),
       m_statisticsNumFrames(0)
 {
 
@@ -53,6 +54,9 @@ void Game::changeState(State& t_state)
     }
 
     m_states.push(t_state);
+
+    m_window.clear(sf::Color::Black);
+
 }
 
 void Game::pushState(State& t_state)
@@ -61,8 +65,9 @@ void Game::pushState(State& t_state)
     {
         m_states.top().get().pause();
     }
-
     m_states.push(t_state);
+
+    m_window.clear(sf::Color::Black);
 }
 
 void Game::popState()
@@ -76,6 +81,8 @@ void Game::popState()
     {
         m_states.top().get().resume();
     }
+
+    m_window.clear(sf::Color::Black);
 }
 
 void Game::run()

@@ -78,6 +78,16 @@ class TopBarView : public sf::Drawable, public sf::Transformable
 
         void assignCallback(std::function<void()> t_function, Callbacks t_type);
 
+        void setVisible(bool t_visible)
+        {
+            m_layout->Show(t_visible);
+        }
+
+        ~TopBarView()
+        {
+            setVisible(false);
+        }
+
 
     protected:
         void draw(sf::RenderTarget &t_target, sf::RenderStates t_states) const;

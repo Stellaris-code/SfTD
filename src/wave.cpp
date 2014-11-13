@@ -31,9 +31,7 @@ SOFTWARE.
 
 Wave::Wave(const sf::Time &t_delay)
     : m_delay(t_delay)
-{
-    m_timer.reset(m_delay);
-}
+{}
 
 void Wave::addEnemy(const Enemy &t_enemy, unsigned int amount)
 {
@@ -48,13 +46,15 @@ void Wave::addEnemy(const Enemy &t_enemy, unsigned int amount)
 
 void Wave::launchWave()
 {
-    m_timer.restart(m_delay / m_wave.front().speed());
+    m_elapsedTime = m_delay; // Launch first enemy; don't wait !
 }
 
 void Wave::update(const sf::Time &t_elapsedTime, const std::vector<sf::Vector2f>& t_path)
 {
-    if (m_timer.isExpired() && m_remainingEnemies > 0)
+    m_elapsedTime += t_elapsedTime;
+    if (m_elapsedTime >= m_delay && m_remainingEnemies > 0)
     {
+        m_elapsedTime = sf::Time::Zero;
         for (auto& enemy : m_wave)
         {
             if (enemy.hidden() && enemy.hasProperty("waiting"))
@@ -62,7 +62,6 @@ void Wave::update(const sf::Time &t_elapsedTime, const std::vector<sf::Vector2f>
                 --m_remainingEnemies;
                 enemy.show();
                 enemy.removeProperty("waiting");
-                m_timer.restart(m_delay / enemy.speed());
                 break;
             }
         }

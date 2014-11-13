@@ -298,11 +298,11 @@ tmx::MapTiles Map::adjacentTiles(const tmx::MapTile &t_tile) const
                 tmx::MapTile(t_tile.gridCoord.x - m_loader.tileSize().x,
                              t_tile.gridCoord.y + m_loader.tileSize().y,
                              m_loader.tileSize().x, m_loader.tileSize().y),
-                tmx::MapTile(static_cast<unsigned int>(t_tile.gridCoord.x) - m_loader.tileSize().x,
+                tmx::MapTile(t_tile.gridCoord.x - m_loader.tileSize().x,
                              t_tile.gridCoord.y,
                              m_loader.tileSize().x, m_loader.tileSize().y),
                 tmx::MapTile(t_tile.gridCoord.x - m_loader.tileSize().x,
-                             static_cast<unsigned int>(t_tile.gridCoord.y) - m_loader.tileSize().y,
+                             t_tile.gridCoord.y - m_loader.tileSize().y,
                              m_loader.tileSize().x, m_loader.tileSize().y)
 
     };

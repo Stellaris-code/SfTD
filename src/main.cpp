@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include "game.hpp"
 
-#include "gameplaystate.hpp"
+#include "menustate.hpp"
 
 int main()
 {
@@ -37,9 +37,8 @@ int main()
 
     FontHolder::instance().load(Fonts::Main, "fonts/Ubuntu-M.ttf");
 
-    Game game;
-    GameplayState s(game);
-    game.changeState(s);
-    game.run();
+    MenuState menuState(Game::instance());
+    Game::instance().changeState(menuState);
+    Game::instance().run();
     return 0;
 }

@@ -37,8 +37,10 @@ void ResourceHolder<Resource, Identifier>::load(Identifier t_id,
     {
         throw game_error("ResourceHolder::load - Failed to load " + t_filename);
     }
+
     // If loading successful, insert resource to map
     insertResource(t_id, std::move(resource));
+
 }
 template <typename Resource, typename Identifier>
 template <typename Parameter>

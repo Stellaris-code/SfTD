@@ -34,7 +34,6 @@ SOFTWARE.
 #include <string>
 
 #include <SFML/System/Vector2.hpp>
-#include <SFML/System/Clock.hpp>
 
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>

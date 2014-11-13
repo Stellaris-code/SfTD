@@ -57,6 +57,9 @@ class ResourceHolder : sf::NonCopyable
         }
 
     private:
+        ResourceHolder() = default;
+
+    private:
         void insertResource(Identifier t_id, std::unique_ptr<Resource> t_resource);
     private:
         std::map<Identifier, std::unique_ptr<Resource>> m_resourceMap {};

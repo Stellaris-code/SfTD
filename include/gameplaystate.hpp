@@ -31,8 +31,13 @@ SOFTWARE.
 #define GAMESTATE_HPP
 
 #include <SFGUI/SFGUI.hpp>
+#include <SFGUI/Renderers/VertexArrayRenderer.hpp>
+#include <SFGUI/Renderers/VertexBufferRenderer.hpp>
 
 #include "state.hpp"
+#include "menustate.hpp"
+#include "map.hpp"
+#include "topbar.hpp"
 
 class GameplayState : public State
 {
@@ -51,11 +56,10 @@ class GameplayState : public State
         virtual void display(sf::RenderWindow& t_window);
 
     private:
-        sf::Clock m_shaderClock {};
+        sf::Time m_elapsedTime {};
         Map m_map {};
         TopBarModel m_topbarModel {100, 100, 10000};
         TopBarView m_topbarView { m_topbarModel };
-        sfg::SFGUI m_gui {};
         sfg::Desktop m_desktop {};
 
 };

@@ -44,7 +44,8 @@ class State
     public:
         State(Game& t_engine)
             : m_engine(t_engine)
-        {}
+        {
+        }
 
     public:
         virtual void pause() = 0;
